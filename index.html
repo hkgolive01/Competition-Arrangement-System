@@ -5712,12 +5712,12 @@
                           if (!involved) return false;
                           if (typeof m.result !== 'undefined' && m.result !== null) {
                             const rv = String(m.result || '').trim();
-                            return rv.length > 0;
+                            return rv.length > 0 && rv !== '待定';
                           }
                           return false;
                         });
                       }
-                      if (hasResultForRound) {
+                      if (hasResultForRound && Number(roundToCheck) > 1 ) {
                         cells[3].style.backgroundColor = '#ffed95';
                       } else {
                         cells[3].style.backgroundColor = 'transparent';
