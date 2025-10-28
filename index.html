@@ -5717,7 +5717,8 @@
                           return false;
                         });
                       }
-                      if (hasResultForRound && Number(roundToCheck) > 1 ) {
+                      if ((hasResultForRound && Number(roundToCheck) > 1) ||
+                        (Number(cells[3].textContent.trim()) > 0 && Number(roundToCheck) === 1)) {
                         cells[3].style.backgroundColor = '#ffed95';
                       } else {
                         cells[3].style.backgroundColor = 'transparent';
@@ -5728,9 +5729,7 @@
                   console.warn('applyScoreBgToClone error', err);
                 }
               })();
-
             } catch (e) { console.warn('apply score bg failed', e); }
-
           }
         } catch (e) {
           console.warn('fix preview top8 failed', e);
