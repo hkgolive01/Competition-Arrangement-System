@@ -2388,7 +2388,7 @@
     <select onchange="setRank(${player.id}, this.value)">
       <option value="">評為</option>
       ${Array.from({ length: 29 }, (_, i) => 29 - i).map(lvl => `<option value="${lvl}級" ${player.rank === `${lvl}級` ? 'selected' : ''}>${lvl}級</option>`).join('')}
-      ${[1, 2, 3, 4, 5, 6, 7, 8].map(d => `<option value="${d}段" ${player.rank === `${d}段` ? 'selected' : ''}>${d}段</option>`).join('')}
+      ${[1, 2, 3, 4, 5].map(d => `<option value="${d}段" ${player.rank === `${d}段` ? 'selected' : ''}>${d}段</option>`).join('')}
     </select>
   </div>
 ` : '';
@@ -5700,7 +5700,7 @@
                       const player = players.find(p => p && String(p.name || '').trim() === nameText);
                       if (!player) return;
                       let hasResultForRound = Array.isArray(player.roundResults) &&
-                        player.roundResults.some(r => Number(r.round) === Number(roundToCheck) && r.outcome && r.outcome !== '待定');
+                      (  player.roundResults.some(r => Number(r.round) === Number(roundToCheck) && r.outcome && r.outcome !== '待定')&& Number(roundToCheck) > 1);
 
                       if (!hasResultForRound && roundObj && Array.isArray(roundObj.matches)) {
                         hasResultForRound = roundObj.matches.some(m => {
@@ -5717,19 +5717,21 @@
                           return false;
                         });
                       }
-                      if ((hasResultForRound && Number(roundToCheck) > 1) ||
-                        (Number(cells[3].textContent.trim()) > 0 && Number(roundToCheck) === 1)) {
+                      if (hasResultForRound ) {
                         cells[3].style.backgroundColor = '#ffed95';
                       } else {
                         cells[3].style.backgroundColor = 'transparent';
                       }
+
                     } catch (e) { }
                   });
                 } catch (err) {
                   console.warn('applyScoreBgToClone error', err);
                 }
               })();
+
             } catch (e) { console.warn('apply score bg failed', e); }
+
           }
         } catch (e) {
           console.warn('fix preview top8 failed', e);
