@@ -5712,7 +5712,7 @@
                           if (!involved) return false;
                           if (typeof m.result !== 'undefined' && m.result !== null) {
                             const rv = String(m.result || '').trim();
-                            return rv.length > 0 && rv !== '待定';
+                            return rv.length > 0;
                           }
                           return false;
                         });
