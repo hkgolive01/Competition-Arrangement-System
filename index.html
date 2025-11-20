@@ -434,6 +434,21 @@
       min-width: 128px;
     }
 
+    #autosaveIndicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      background: #2ecc71;
+      box-shadow: 0 0 8px rgba(46, 204, 113, 0.35);
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+
+    button#setFileHandleBtn.autosave-on {
+      outline: 2px solid rgba(46, 204, 113, 0.12);
+    }
+
     @media print {
       body {
         margin: 0;
@@ -2607,7 +2622,7 @@
           btn.style.display = 'inline-block';
         }
       });
-
+      updateAutosaveUI(true);
       recalculatePlayerStatsUpTo(currentRound);
       updateUI();
       updateLayoutBasedOnWidth();
@@ -4783,6 +4798,55 @@
         updateLayoutBasedOnWidth();
       }
     });
+    // ----------------- 新增：停止自動保存與 UI 更新 -----------------
+    function stopAutoSave() {
+      try {
+        // 清掉排程 timer
+        if (typeof __autoSaveTimer !== 'undefined' && __autoSaveTimer) {
+          clearTimeout(__autoSaveTimer);
+          __autoSaveTimer = null;
+        }
+        // 若有正在進行的儲存，標記為已取消（保守做法）
+        if (typeof __saveInProgress !== 'undefined') {
+          __saveInProgress = false;
+        }
+
+        // 清除 fileHandle（避免之後還會寫入到舊檔）
+        try { fileHandle = null; } catch (e) { /* ignore */ }
+
+        // 移除 UI 指示燈
+        const ind = document.getElementById('autosaveIndicator');
+        if (ind && ind.parentNode) ind.parentNode.removeChild(ind);
+
+        const btn = document.getElementById('setFileHandleBtn');
+        if (btn) btn.classList.remove('autosave-on');
+
+        showToast && showToast('已停止自動保存', 1500);
+      } catch (e) {
+        console.warn('stopAutoSave failed', e);
+      }
+    }
+
+    function updateAutosaveUI(enabled) {
+      const parent = document.querySelector('.tools-left') || document.body;
+      let ind = document.getElementById('autosaveIndicator');
+      if (enabled) {
+        if (!ind) {
+          ind = document.createElement('span');
+          ind.id = 'autosaveIndicator';
+          ind.title = '自動儲存已啟用';
+          ind.style.marginLeft = '8px';
+          parent.querySelector('#setFileHandleBtn')?.insertAdjacentElement('afterend', ind);
+        }
+        ind.style.display = 'inline-block';
+        const btn = document.getElementById('setFileHandleBtn');
+        if (btn) btn.classList.add('autosave-on');
+      } else {
+        if (ind) ind.style.display = 'none';
+        const btn = document.getElementById('setFileHandleBtn');
+        if (btn) btn.classList.remove('autosave-on');
+      }
+    }
 
     async function setFileHandle() {
       try {
@@ -4794,6 +4858,8 @@
           }]
         });
         saveState();
+        updateAutosaveUI(true);
+        showToast && showToast('已啟用自動保存 (會寫入所選檔案)', 1800);
       } catch (err) {
         console.error("無法設置保存檔:" + err);
       }
@@ -4951,11 +5017,14 @@
 
 
     function importState(event) {
+      updateAutosaveUI(false);
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = async function (e) {
         try {
+          try { stopAutoSave(); } catch (ex) { console.warn('stopAutoSave err', ex); }
+          fileHandle = null;
           const state = JSON.parse(e.target.result);
           pairingMode = state.pairingMode || "Z";
           document.querySelectorAll('.pairing-mode-btn').forEach(btn => {
@@ -5289,119 +5358,119 @@
         document.addEventListener('DOMContentLoaded', attachButton);
       }
     })();
-function buildCertificateText() {
-  const nameInput = document.getElementById('tournamentName');
-  const dateInput = document.getElementById('tournamentDate');
+    function buildCertificateText() {
+      const nameInput = document.getElementById('tournamentName');
+      const dateInput = document.getElementById('tournamentDate');
 
-  const rawName = nameInput && nameInput.value
-    ? nameInput.value.trim()
-    : (typeof tournamentName !== 'undefined' ? (tournamentName || '') : '');
-  const tourDate = dateInput && dateInput.value
-    ? dateInput.value
-    : (typeof tournamentDate !== 'undefined' ? (tournamentDate || '') : '');
+      const rawName = nameInput && nameInput.value
+        ? nameInput.value.trim()
+        : (typeof tournamentName !== 'undefined' ? (tournamentName || '') : '');
+      const tourDate = dateInput && dateInput.value
+        ? dateInput.value
+        : (typeof tournamentDate !== 'undefined' ? (tournamentDate || '') : '');
 
-  // 如果需要把比賽名稱每個單字換行（保留原本行為）
-  const brokenName = rawName ? rawName.replace(/\s+/g, '\n') : '';
+      // 如果需要把比賽名稱每個單字換行（保留原本行為）
+      const brokenName = rawName ? rawName.replace(/\s+/g, '\n') : '';
 
-  let playerNames = [];
+      let playerNames = [];
 
-  // 取出 #scoreboard tbody 的列（排除可能的 history-row）
-  const sbRows = Array.from(document.querySelectorAll('#scoreboard tbody tr'))
-    .filter(row => !row.classList.contains('history-row'));
+      // 取出 #scoreboard tbody 的列（排除可能的 history-row）
+      const sbRows = Array.from(document.querySelectorAll('#scoreboard tbody tr'))
+        .filter(row => !row.classList.contains('history-row'));
 
-  if (sbRows && sbRows.length) {
-    playerNames = sbRows.map(row => {
-      const cells = Array.from(row.querySelectorAll('td,th'));
-      // 1) 優先取第二欄（index 1）
-      let name = cells[1] ? String(cells[1].textContent).trim() : '';
+      if (sbRows && sbRows.length) {
+        playerNames = sbRows.map(row => {
+          const cells = Array.from(row.querySelectorAll('td,th'));
+          // 1) 優先取第二欄（index 1）
+          let name = cells[1] ? String(cells[1].textContent).trim() : '';
 
-      // 2) 若沒有，嘗試常見 class
-      if (!name) {
-        const el = row.querySelector('.player-name, .name, .entrant');
-        if (el) name = String(el.textContent).trim();
+          // 2) 若沒有，嘗試常見 class
+          if (!name) {
+            const el = row.querySelector('.player-name, .name, .entrant');
+            if (el) name = String(el.textContent).trim();
+          }
+
+          // 3) 最後回退：整列文字移除名次（第一欄）後取首段
+          if (!name) {
+            const whole = String(row.textContent || '').trim();
+            const rank = cells[0] ? String(cells[0].textContent || '').trim() : '';
+            if (rank) {
+              name = whole.replace(rank, '').trim().split(/\r?\n/)[0].trim();
+            } else {
+              name = whole.split(/\r?\n/)[0].trim();
+            }
+          }
+
+          return name || null;
+        }).filter(Boolean);
       }
 
-      // 3) 最後回退：整列文字移除名次（第一欄）後取首段
-      if (!name) {
-        const whole = String(row.textContent || '').trim();
-        const rank = cells[0] ? String(cells[0].textContent || '').trim() : '';
-        if (rank) {
-          name = whole.replace(rank, '').trim().split(/\r?\n/)[0].trim();
-        } else {
-          name = whole.split(/\r?\n/)[0].trim();
-        }
+      // 若表格沒抓到，回退到全域 players 陣列（若有）
+      if ((!playerNames || playerNames.length === 0) && Array.isArray(typeof players !== 'undefined' ? players : null) && players && players.length) {
+        playerNames = players.map(p => p && p.name ? String(p.name).trim() : '').filter(Boolean);
       }
 
-      return name || null;
-    }).filter(Boolean);
-  }
+      const lines = [];
+      if (brokenName) lines.push(brokenName);
+      if (tourDate) lines.push(tourDate);
+      if (playerNames && playerNames.length) lines.push(...playerNames);
 
-  // 若表格沒抓到，回退到全域 players 陣列（若有）
-  if ((!playerNames || playerNames.length === 0) && Array.isArray(typeof players !== 'undefined' ? players : null) && players && players.length) {
-    playerNames = players.map(p => p && p.name ? String(p.name).trim() : '').filter(Boolean);
-  }
+      return lines.join('\n');
+    }
 
-  const lines = [];
-  if (brokenName) lines.push(brokenName);
-  if (tourDate) lines.push(tourDate);
-  if (playerNames && playerNames.length) lines.push(...playerNames);
+    async function copyCertificateToClipboard() {
+      const text = buildCertificateText();
+      if (!text || !text.trim()) {
+        alert('找不到可複製的內容 (請先設定比賽名稱/日子或確保成績總表有選手)');
+        return;
+      }
 
-  return lines.join('\n');
-}
-
-async function copyCertificateToClipboard() {
-  const text = buildCertificateText();
-  if (!text || !text.trim()) {
-    alert('找不到可複製的內容 (請先設定比賽名稱/日子或確保成績總表有選手)');
-    return;
-  }
-
-  // 優先使用 navigator.clipboard
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
+      // 優先使用 navigator.clipboard
       try {
-        if (typeof showToast === 'function') {
-          showToast('已複製到剪貼簿', 2000);
-        } else {
-          alert('已複製到剪貼簿');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          try {
+            if (typeof showToast === 'function') {
+              showToast('已複製到剪貼簿', 2000);
+            } else {
+              alert('已複製到剪貼簿');
+            }
+          } catch (e) {
+            alert('已複製到剪貼簿');
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn('navigator.clipboard.writeText 失敗，進入 fallback', err);
+      }
+
+      // fallback: 隱藏 textarea + execCommand
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        // 放在視窗外但仍可選取
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '-9999px';
+        ta.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+
+        const ok = document.execCommand && document.execCommand('copy');
+        document.body.removeChild(ta);
+
+        if (ok) {
+          alert('已複製到剪貼簿 (使用 fallback)');
+          return;
         }
       } catch (e) {
-        alert('已複製到剪貼簿');
+        console.warn('execCommand fallback 失敗', e);
       }
-      return;
+
+      // 最後回退到 prompt 讓使用者手動複製
+      prompt('請手動複製以下文字 (Ctrl/Cmd+C)：', text);
     }
-  } catch (err) {
-    console.warn('navigator.clipboard.writeText 失敗，進入 fallback', err);
-  }
-
-  // fallback: 隱藏 textarea + execCommand
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    // 放在視窗外但仍可選取
-    ta.style.position = 'fixed';
-    ta.style.top = '0';
-    ta.style.left = '-9999px';
-    ta.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-
-    const ok = document.execCommand && document.execCommand('copy');
-    document.body.removeChild(ta);
-
-    if (ok) {
-      alert('已複製到剪貼簿 (使用 fallback)');
-      return;
-    }
-  } catch (e) {
-    console.warn('execCommand fallback 失敗', e);
-  }
-
-  // 最後回退到 prompt 讓使用者手動複製
-  prompt('請手動複製以下文字 (Ctrl/Cmd+C)：', text);
-}
 
     document.addEventListener('DOMContentLoaded', function () {
       const copyBtn = document.getElementById('copyCertificateBtn');
@@ -5758,7 +5827,7 @@ async function copyCertificateToClipboard() {
                       const player = players.find(p => p && String(p.name || '').trim() === nameText);
                       if (!player) return;
                       let hasResultForRound = Array.isArray(player.roundResults) &&
-                      (  player.roundResults.some(r => Number(r.round) === Number(roundToCheck) && r.outcome && r.outcome !== '待定')&& Number(roundToCheck) > 1);
+                        (player.roundResults.some(r => Number(r.round) === Number(roundToCheck) && r.outcome && r.outcome !== '待定') && Number(roundToCheck) > 1);
 
                       if (!hasResultForRound && roundObj && Array.isArray(roundObj.matches)) {
                         hasResultForRound = roundObj.matches.some(m => {
@@ -5775,7 +5844,7 @@ async function copyCertificateToClipboard() {
                           return false;
                         });
                       }
-                      if (hasResultForRound ) {
+                      if (hasResultForRound) {
                         cells[3].style.backgroundColor = '#ffed95';
                       } else {
                         cells[3].style.backgroundColor = 'transparent';
