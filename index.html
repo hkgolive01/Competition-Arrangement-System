@@ -140,8 +140,15 @@
     .competition-info {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 2px !important;
+      padding-top: 10px !important;
+      padding-bottom: 14px !important;
       align-items: stretch;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     .header-top {
@@ -163,11 +170,11 @@
     .header-tools {
       display: flex;
       justify-content: space-between;
-      gap: 12px;
+      gap: 4px;
       align-items: center;
       flex-wrap: wrap;
-      padding-top: 6px;
-      border-top: 1px dashed rgba(0, 0, 0, 0.04);
+      padding-top: 8px;
+      
     }
 
     .tools-left,
@@ -609,15 +616,6 @@
       #playersSection {
         display: none !important;
       }
-    }
-
-    .competition-info {
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      background: #ffffff;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-      padding: 12px;
     }
 
     .competition-info #roundNav {
@@ -1532,10 +1530,10 @@
       </div>
       <div class="tools-right">
         <button id="copyCertificateBtn">複製獎狀內容</button>
-        <button id="screenshotPairingsBtn">截圖對陣表</button>
+        <button id="screenshotPairingsBtn">截圖對陣表 (截圖對陣表-指定時間)</button>
         <button id="printPairingsBtn">列印對陣表</button>
         <button id="screenshotScoreboardBtn">截圖成績總表</button>
-        <button id="printScoreboardBtn">列印成績總表</button>
+        <button id="printScoreboardBtn">列印成績總表 (UltraRes PDF Studio)</button>
         <button id="exportAllExcelBtn">匯出成 Excel</button>
       </div>
     </div>
@@ -1581,7 +1579,6 @@
           <tbody></tbody>
         </table>
       </div>
-
       <div class="section" id="playersSection">
         <h2>選手</h2>
         <textarea id="batchPlayers" placeholder="輸入選手名稱,每行一個或:姓名 代表隊" rows="10" style="width:90%;"></textarea>
@@ -4488,6 +4485,12 @@
     });
     document.getElementById("printScoreboardBtn").addEventListener("click", function () {
       printSection("scoreboard");
+    });
+
+    document.getElementById("printScoreboardBtn").addEventListener("contextmenu", function (e) {
+      e.preventDefault();  // 阻止瀏覽器預設右鍵選單
+      e.stopPropagation(); // 【關鍵】阻止事件傳遞給上層（防止跳出原本的賽事預覽視窗）
+      window.open("https://hkgolive01.github.io/UltraRes-PDF-Studio/", "_blank");
     });
 
     function printSection(sectionId) {
