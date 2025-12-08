@@ -5257,7 +5257,7 @@
             }
 
             function buildScoreboardSheetData(roundNum) {
-                const header = ['名次', '選手名稱', '評級·標記', '積分', '對手分', '對手分細節', '累積分', '累積分細節', '代表隊'];
+                const header = ['名次', '選手名稱', '編號', '評級·標記', '積分', '對手分', '對手分細節', '累積分', '累積分細節', '代表隊'];
                 const computed = computeStatsFor(roundNum);
 
                 function getOppMatchPointsRow(player) {
@@ -5333,6 +5333,7 @@
                     rows.push([
                         finalRankingMap[p.id],
                         p.name,
+                        p.id,
                         markers.length ? markers.join(';') : '-',
                         p.matchPoints,
                         opp.total,
