@@ -1012,23 +1012,7 @@
     </style>
 
     <script>
-        (function() {
-        function adjustZoom() {
-            // 獲取設備的像素比 (Windows 200% 時通常為 2)
-            var ratio = window.devicePixelRatio || 1;
-            
-            // 如果比例不為 1，則進行反向縮放 (例如 200% 時，縮放為 50% 即 0.5)
-            if (ratio !== 1) {
-                document.body.style.zoom = (1 / ratio);
-            }
-        }
-
-        // 頁面加載完成時執行
-        window.addEventListener('DOMContentLoaded', adjustZoom);
-        
-        // 視窗大小改變（或拖到不同螢幕）時重新計算
-        window.addEventListener('resize', adjustZoom);
-    })();
+       
         (function () {
             function addMinutesAndRoundUp(dateISOorDate, addMinutes) {
                 if (!dateISOorDate) return null;
