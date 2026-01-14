@@ -1545,7 +1545,7 @@
                 <button id="screenshotScoreboardBtn">截圖成績總表</button>
                 <button id="printScoreboardBtn">列印成績總表 (UltraRes PDF Studio)</button>
                 <button id="copyCertificateBtn">複製獎狀內容 (獎狀界面)</button>
-                <button id="exportAllExcelBtn">匯出成 Excel</button>
+                <button id="exportAllExcelBtn">匯出成 Excel (Team Rank)</button>
             </div>
         </div>
 
@@ -4548,6 +4548,13 @@
             window.open("https://hkgolive01.github.io/Award-Certificate-Generator/", "_blank");
         });
 
+        document.getElementById("exportAllExcelBtn").addEventListener("contextmenu", function (e) {
+            e.preventDefault();  // 阻止瀏覽器預設右鍵選單
+            e.stopPropagation(); // 【關鍵】阻止事件傳遞給上層（防止跳出原本的賽事預覽視窗）
+            window.open("https://hkgolive01.github.io/Team-Rank/", "_blank");
+        });
+
+
         function printSection(sectionId) {
             const roundData = rounds[viewRound - 1];
             const hasResults = roundData && roundData.submitted === true;
@@ -5478,12 +5485,10 @@
                 }).filter(Boolean);
             }
 
-            // 若表格沒抓到，回退到全域 players 陣列（若有）
             if ((!playerNames || playerNames.length === 0) && Array.isArray(typeof players !== 'undefined' ? players : null) && players && players.length) {
                 playerNames = players.map(p => {
                     const n = p && p.name ? String(p.name).trim() : '';
                     if (!n) return '';
-                    // --- 修改：加入隊伍判斷 ---
                     const t = p.team ? String(p.team).trim() : '';
                     return t ? (n + ' ' + t) : n;
                 }).filter(Boolean);
