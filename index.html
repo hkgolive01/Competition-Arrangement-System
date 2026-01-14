@@ -1012,7 +1012,7 @@
     </style>
 
     <script>
-       
+
         (function () {
             function addMinutesAndRoundUp(dateISOorDate, addMinutes) {
                 if (!dateISOorDate) return null;
@@ -5417,20 +5417,15 @@
                 document.addEventListener('DOMContentLoaded', attachButton);
             }
         })();
+
         function buildCertificateText() {
             const nameInput = document.getElementById('tournamentName');
             const dateInput = document.getElementById('tournamentDate');
-
-            const rawName = nameInput && nameInput.value
-                ? nameInput.value.trim()
-                : (typeof tournamentName !== 'undefined' ? (tournamentName || '') : '');
-            const tourDate = dateInput && dateInput.value
-                ? dateInput.value
-                : (typeof tournamentDate !== 'undefined' ? (tournamentDate || '') : '');
+            const rawName = nameInput && nameInput.value ? nameInput.value.trim() : (typeof tournamentName !== 'undefined' ? (tournamentName || '') : '');
+            const tourDate = dateInput && dateInput.value ? dateInput.value : (typeof tournamentDate !== 'undefined' ? (tournamentDate || '') : '');
 
             // 如果需要把比賽名稱每個單字換行（保留原本行為）
             const brokenName = rawName ? rawName.replace(/\s+/g, '\n') : '';
-
             let playerNames = [];
 
             // 取出 #scoreboard tbody 的列（排除可能的 history-row）
@@ -5440,10 +5435,22 @@
             if (sbRows && sbRows.length) {
                 playerNames = sbRows.map(row => {
                     const cells = Array.from(row.querySelectorAll('td,th'));
-                    // 1) 優先取第二欄（index 1）
+
+                    // 1) 優先取第二欄（index 1）為姓名
                     let name = cells[1] ? String(cells[1].textContent).trim() : '';
 
-                    // 2) 若沒有，嘗試常見 class
+                    // --- 新增：嘗試取得隊伍名稱 (第9欄, index 8) ---
+                    let team = '';
+                    if (cells[8]) {
+                        const t = String(cells[8].textContent).trim();
+                        // 只有當隊伍名稱存在且不等於 '-' 時才使用
+                        if (t && t !== '-') {
+                            team = t;
+                        }
+                    }
+                    // -------------------------------------------
+
+                    // 2) 若沒有姓名，嘗試從常見 class 獲取
                     if (!name) {
                         const el = row.querySelector('.player-name, .name, .entrant');
                         if (el) name = String(el.textContent).trim();
@@ -5460,13 +5467,26 @@
                         }
                     }
 
-                    return name || null;
+                    // --- 修改：如果有名稱且有隊伍，則組合起來；否則只回傳名稱 ---
+                    if (name) {
+                        if (team) {
+                            return name + ' ' + team;
+                        }
+                        return name;
+                    }
+                    return null;
                 }).filter(Boolean);
             }
 
             // 若表格沒抓到，回退到全域 players 陣列（若有）
             if ((!playerNames || playerNames.length === 0) && Array.isArray(typeof players !== 'undefined' ? players : null) && players && players.length) {
-                playerNames = players.map(p => p && p.name ? String(p.name).trim() : '').filter(Boolean);
+                playerNames = players.map(p => {
+                    const n = p && p.name ? String(p.name).trim() : '';
+                    if (!n) return '';
+                    // --- 修改：加入隊伍判斷 ---
+                    const t = p.team ? String(p.team).trim() : '';
+                    return t ? (n + ' ' + t) : n;
+                }).filter(Boolean);
             }
 
             const lines = [];
