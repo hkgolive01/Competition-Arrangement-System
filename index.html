@@ -4,12 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 20px;
             background: #ffffff;
             color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-family: 'Noto Sans TC', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
         }
 
         input,
@@ -22,8 +29,8 @@
         }
 
         button {
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 3px 4px;
+            border-radius: 6px;
             border: 1px solid #fa8c8c;
             background: linear-gradient(#ffffff, #ffffff);
             color: #24292f;
@@ -180,13 +187,12 @@
         .tools-left,
         .tools-right {
             display: flex;
-            gap: 8px;
+            gap: 2px;
             align-items: center;
             flex-wrap: wrap;
         }
 
         @media (max-width: 1400px) {
-
             .header-top,
             .header-tools {
                 flex-direction: column;
@@ -936,20 +942,7 @@
                 width: 100%;
             }
         }
-    </style>
-    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-            font-family: 'Noto Sans TC', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-        }
-    </style>
 
-    <style>
         .small-latin {
             display: inline-block;
             font-size: 0.72em !important;
@@ -1009,9 +1002,178 @@
             cursor: pointer;
             margin-left: 4px;
         }
+
+        .submitted-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: #ffffff;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 700;
+            font-size: 1.05em;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+        }
     </style>
+</head>
+
+<body>
+    <div class="section competition-info" id="competitionHeader">
+        <div class="header-top">
+            <div class="header-left">
+                <label>比賽名稱:
+                    <input type="text" id="tournamentName" placeholder="輸入比賽名稱">
+                </label>
+                <label>比賽日子:
+                    <input type="date" id="tournamentDate">
+                </label>
+                <label style="margin-left:10px;">比賽用時:
+                    <select id="timeControl">
+                        <optgroup label="包干制">
+                            <option value="10+0">每方10分鐘【包干制】</option>
+                            <option value="15+0">每方15分鐘【包干制】</option>
+                            <option value="20+0">每方20分鐘【包干制】</option>
+                            <option value="25+0">每方25分鐘【包干制】</option>
+                            <option value="30+0">每方30分鐘【包干制】</option>
+                            <option value="40+0">每方40分鐘【包干制】</option>
+                            <option value="45+0">每方45分鐘【包干制】</option>
+                            <option value="60+0">每方60分鐘【包干制】</option>
+                        </optgroup>
+                        <optgroup label="加秒制">
+                            <option value="5+5">基本時間5分鐘 · 每步加5秒【加秒制】</option>
+                            <option value="5+6">基本時間5分鐘 · 每步加6秒【加秒制】</option>
+                            <option value="10+6">基本時間10分鐘 · 每步加6秒【加秒制】</option>
+                            <option value="10+10">基本時間10分鐘 · 每步加10秒【加秒制】</option>
+                            <option value="10+20">基本時間10分鐘 · 每步加20秒【加秒制】</option>
+                            <option value="15+6">基本時間15分鐘 · 每步加6秒【加秒制】</option>
+                            <option value="25+3">基本時間25分鐘 · 每步加3秒【加秒制】</option>
+                            <option value="25+6">基本時間25分鐘 · 每步加6秒【加秒制】</option>
+                        </optgroup>
+                        <optgroup label="讀秒制">
+                            <option value="0+3x10">不設基本時間 · 3次10秒【讀秒制】</option>
+                            <option value="25+3x10">基本時間25分鐘 · 3次10秒【讀秒制】</option>
+                            <option value="40+3x10">基本時間40分鐘 · 3次10秒【讀秒制】</option>
+                            <option value="45+3x20">基本時間45分鐘 · 3次20秒【讀秒制】</option>
+                            <option value="55+3x10">基本時間55分鐘 · 3次10秒【讀秒制】</option>
+                        </optgroup>
+                    </select>
+                </label>
+            </div>
+
+            <div class="header-right">
+                <label class="state-checkbox-label">
+                    <input type="checkbox" id="showEventTimeCheckbox" checked>
+                    賽事時間
+                </label>
+                <label class="state-checkbox-label">
+                    <input type="checkbox" id="useAvgOppRankCheckbox" checked>
+                    平均名次
+                </label>
+                <span>比賽輪數:</span>
+                <div id="roundSelection" style="display:inline-block;">
+                    <button class="round-btn" data-round="3">3</button>
+                    <button class="round-btn" data-round="4">4</button>
+                    <button class="round-btn selected-round" data-round="5">5</button>
+                    <button class="round-btn" data-round="6">6</button>
+                    <button class="round-btn" data-round="7">7</button>
+                    <button class="round-btn" data-round="8">8</button>
+                </div>
+                <span style="margin-left:10px;">編排方式:</span>
+                <div id="pairingMode" style="display:inline-block;">
+                    <button class="pairing-mode-btn selected-mode" data-mode="Z">Z型</button>
+                    <button class="pairing-mode-btn" data-mode="U">U型</button>
+                </div>
+                <button id="startTournamentBtn">開始比賽</button>
+            </div>
+        </div>
+        <div class="header-tools">
+            <div class="tools-left">
+                <button id="togglePlayersSectionBtn">顯示選手</button>
+                <button id="importStateBtn">上傳進度</button>
+                <input type="file" id="importFileInput" style="display:none;" accept=".json">
+                <button id="setFileHandleBtn">設置保存</button>
+                <div id="roundNav" style="margin-top:8px; display:none;"></div>
+            </div>
+            <div class="tools-right">
+                <button id="screenshotPairingsBtn">截圖對陣 (截圖對陣+TIME)</button>
+                <button id="printPairingsBtn">列印對陣</button>
+                <button id="screenshotScoreboardBtn">截圖成績</button>
+                <button id="printScoreboardBtn">列印成績 (PDF)</button>
+                <button id="copyCertificateBtn">複製獎狀內容 (Cert)</button>
+                <button id="exportAllExcelBtn">匯出成 Excel (TEAM·RANK)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="left">
+            <div class="section" id="roundSection" style="display:none;">
+                <h2 id="roundTitle">第1輪對陣表</h2>
+
+                <div id="roundContainer"></div>
+                <div class="round-controls">
+                    <div class="left-group">
+                        <button id="submitRoundBtn" style="display:none;">提交本輪結果</button>
+                        <button id="nextRoundBtn" style="display:none;">下一輪</button>
+                    </div>
+                    <div class="right-group">
+                        <button id="removeRoundBtn" style="display:none;">返回上一步</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="right" id="rightColumn">
+            <div class="section" id="scoreboardSection" style="display:none;">
+                <h2 id="scoreboardTitle">完成 0 輪後的成績總表</h2>
+                <table id="scoreboard">
+                    <thead>
+                        <tr>
+                            <th>名次</th>
+                            <th>選手名稱</th>
+                            <th>評級·標記</th>
+                            <th>積分</th>
+                            <th>對手分</th>
+                            <th>對手分細節</th>
+                            <th>累積分</th>
+                            <th>累積分細節</th>
+                            <th>代表隊</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="section" id="playersSection">
+                <h2>選手</h2>
+                <textarea id="batchPlayers" placeholder="輸入選手名稱,每行一個或:姓名 代表隊" rows="10" style="width:90%;"></textarea>
+                <div class="player-buttons">
+                    <button id="addBatchPlayersBtn">添加選手</button>
+                    <button id="randomizePlayersBtn">隨機生成</button>
+                    <button id="clearNumbersBtn">清除全部編號</button>
+                </div>
+                <ul id="playersList"></ul>
+            </div>
+        </div>
+    </div>
 
     <script>
+        let tournamentName = "";
+        let tournamentDate = "";
+        let timeControl = document.getElementById('timeControl').value;
+        let players = [];
+        let rounds = [];
+        let currentRound = 0;
+        let totalRounds = 5;
+        let playerIdCounter = 1;
+        let roundSubmitted = false;
+        let competitionStarted = false;
+        let viewRound = 0;
+        let fileHandle = null;
+        let selectedPlayer = null;
+        let pairingMode = "Z";
+        let useAvgOppRank = true;
+        let showEventTime = true;
+        let tournamentFinishTime = null;
 
         (function () {
             function addMinutesAndRoundUp(dateISOorDate, addMinutes) {
@@ -1446,182 +1608,7 @@
                 try { shrinkLatinDigitsInPlayerNamesOnce(); startPlayerNameObserver(); } catch (e) { console.error(e); }
             });
 
-        })(); 
-    </script>
-    <style>
-        .submitted-badge {
-            display: inline-block;
-            background: #27ae60;
-            color: #ffffff;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: 700;
-            font-size: 1.05em;
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
-        }
-    </style>
-</head>
-
-<body>
-    <div class="section competition-info" id="competitionHeader">
-        <div class="header-top">
-            <div class="header-left">
-                <label>比賽名稱:
-                    <input type="text" id="tournamentName" placeholder="輸入比賽名稱">
-                </label>
-                <label>比賽日子:
-                    <input type="date" id="tournamentDate">
-                </label>
-                <label style="margin-left:10px;">比賽用時:
-                    <select id="timeControl">
-                        <optgroup label="包干制">
-                            <option value="10+0">每方10分鐘【包干制】</option>
-                            <option value="15+0">每方15分鐘【包干制】</option>
-                            <option value="20+0">每方20分鐘【包干制】</option>
-                            <option value="25+0">每方25分鐘【包干制】</option>
-                            <option value="30+0">每方30分鐘【包干制】</option>
-                            <option value="40+0">每方40分鐘【包干制】</option>
-                            <option value="45+0">每方45分鐘【包干制】</option>
-                            <option value="60+0">每方60分鐘【包干制】</option>
-                        </optgroup>
-                        <optgroup label="加秒制">
-                            <option value="5+5">基本時間5分鐘 · 每步加5秒【加秒制】</option>
-                            <option value="5+6">基本時間5分鐘 · 每步加6秒【加秒制】</option>
-                            <option value="10+6">基本時間10分鐘 · 每步加6秒【加秒制】</option>
-                            <option value="10+10">基本時間10分鐘 · 每步加10秒【加秒制】</option>
-                            <option value="10+20">基本時間10分鐘 · 每步加20秒【加秒制】</option>
-                            <option value="15+6">基本時間15分鐘 · 每步加6秒【加秒制】</option>
-                            <option value="25+3">基本時間25分鐘 · 每步加3秒【加秒制】</option>
-                            <option value="25+6">基本時間25分鐘 · 每步加6秒【加秒制】</option>
-                        </optgroup>
-                        <optgroup label="讀秒制">
-                            <option value="0+3x10">不設基本時間 · 3次10秒【讀秒制】</option>
-                            <option value="25+3x10">基本時間25分鐘 · 3次10秒【讀秒制】</option>
-                            <option value="40+3x10">基本時間40分鐘 · 3次10秒【讀秒制】</option>
-                            <option value="45+3x20">基本時間45分鐘 · 3次20秒【讀秒制】</option>
-                            <option value="55+3x10">基本時間55分鐘 · 3次10秒【讀秒制】</option>
-                        </optgroup>
-                    </select>
-                </label>
-            </div>
-
-            <div class="header-right">
-                <label class="state-checkbox-label" title="截圖時是否在右上加入賽事時間浮水印">
-                    <input type="checkbox" id="showEventTimeCheckbox" checked>
-                    賽事時間
-                </label>
-                <label class="state-checkbox-label" title="是否在排名拆分時使用「對手平均名次」作為條件">
-                    <input type="checkbox" id="useAvgOppRankCheckbox" checked>
-                    平均名次
-                </label>
-                <span>比賽輪數:</span>
-                <div id="roundSelection" style="display:inline-block;">
-                    <button class="round-btn" data-round="3">3</button>
-                    <button class="round-btn" data-round="4">4</button>
-                    <button class="round-btn selected-round" data-round="5">5</button>
-                    <button class="round-btn" data-round="6">6</button>
-                    <button class="round-btn" data-round="7">7</button>
-                    <button class="round-btn" data-round="8">8</button>
-                </div>
-                <span style="margin-left:10px;">編排方式:</span>
-                <div id="pairingMode" style="display:inline-block;">
-                    <button class="pairing-mode-btn selected-mode" data-mode="Z">Z型</button>
-                    <button class="pairing-mode-btn" data-mode="U">U型</button>
-                </div>
-                <button id="startTournamentBtn">開始比賽</button>
-            </div>
-        </div>
-        <div class="header-tools">
-            <div class="tools-left">
-                <button id="togglePlayersSectionBtn">顯示選手</button>
-                <button id="importStateBtn">上傳進度</button>
-                <input type="file" id="importFileInput" style="display:none;" accept=".json">
-                <button id="setFileHandleBtn">設置保存</button>
-                <div id="roundNav" style="margin-top:8px; display:none;"></div>
-            </div>
-            <div class="tools-right">
-                <button id="screenshotPairingsBtn">截圖對陣表 (截圖對陣表-指定時間)</button>
-                <button id="printPairingsBtn">列印對陣表</button>
-                <button id="screenshotScoreboardBtn">截圖成績總表</button>
-                <button id="printScoreboardBtn">列印成績總表 (UltraRes PDF Studio)</button>
-                <button id="copyCertificateBtn">複製獎狀內容 (獎狀界面)</button>
-                <button id="exportAllExcelBtn">匯出成 Excel (Team Rank)</button>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="container">
-        <div class="left">
-            <div class="section" id="roundSection" style="display:none;">
-                <h2 id="roundTitle">第1輪對陣表</h2>
-
-                <div id="roundContainer"></div>
-                <div class="round-controls">
-                    <div class="left-group">
-                        <button id="submitRoundBtn" style="display:none;">提交本輪結果</button>
-                        <button id="nextRoundBtn" style="display:none;">下一輪</button>
-                    </div>
-                    <div class="right-group">
-                        <button id="removeRoundBtn" style="display:none;">返回上一步</button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="right" id="rightColumn">
-            <div class="section" id="scoreboardSection" style="display:none;">
-                <h2 id="scoreboardTitle">完成 0 輪後的成績總表</h2>
-                <table id="scoreboard">
-                    <thead>
-                        <tr>
-                            <th>名次</th>
-                            <th>選手名稱</th>
-                            <th>評級·標記</th>
-                            <th>積分</th>
-                            <th>對手分</th>
-                            <th>對手分細節</th>
-                            <th>累積分</th>
-                            <th>累積分細節</th>
-                            <th>代表隊</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <div class="section" id="playersSection">
-                <h2>選手</h2>
-                <textarea id="batchPlayers" placeholder="輸入選手名稱,每行一個或:姓名 代表隊" rows="10" style="width:90%;"></textarea>
-                <div class="player-buttons">
-                    <button id="addBatchPlayersBtn">添加選手</button>
-                    <button id="randomizePlayersBtn">隨機生成</button>
-                    <button id="clearNumbersBtn">清除全部編號</button>
-                </div>
-                <ul id="playersList"></ul>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let tournamentName = "";
-        let tournamentDate = "";
-        let timeControl = document.getElementById('timeControl').value;
-        let players = [];
-        let rounds = [];
-        let currentRound = 0;
-        let totalRounds = 5;
-        let playerIdCounter = 1;
-        let roundSubmitted = false;
-        let competitionStarted = false;
-        let viewRound = 0;
-        let fileHandle = null;
-        let selectedPlayer = null;
-        let pairingMode = "Z";
-        let useAvgOppRank = true;
-        let showEventTime = true;
-        let tournamentFinishTime = null;
-
+        })();
         document.addEventListener("DOMContentLoaded", () => {
             const tournamentDateInput = document.getElementById("tournamentDate");
             tournamentDateInput.value = new Date().toISOString().split('T')[0];
